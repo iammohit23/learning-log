@@ -1,8 +1,18 @@
-name: Daily Contribution Commit x10
+name: Daily Contributions Workflow x10
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # daily at 00:00 UTC
+    # 10 runs per day at different times (UTC)
+    - cron: '0 6 * * *'   # 6:00 AM UTC
+    - cron: '0 8 * * *'   # 8:00 AM UTC
+    - cron: '0 10 * * *'  # 10:00 AM UTC
+    - cron: '0 12 * * *'  # 12:00 PM UTC
+    - cron: '0 14 * * *'  # 2:00 PM UTC
+    - cron: '0 15 * * *'  # 3:00 PM UTC
+    - cron: '0 16 * * *'  # 4:00 PM UTC
+    - cron: '0 17 * * *'  # 5:00 PM UTC
+    - cron: '0 18 * * *'  # 6:00 PM UTC
+    - cron: '0 20 * * *'  # 8:00 PM UTC
   workflow_dispatch:      # allows manual run
 
 permissions:
@@ -25,17 +35,19 @@ jobs:
             echo "" >> contributions.md
           fi
 
-      - name: Make 10 commits
+      - name: Append today's contribution
+        run: |
+          TODAY="$(date -u +"%Y-%m-%d %H:%M UTC")"
+          echo "- $TODAY : Daily contribution entry" >> contributions.md
+
+      - name: Commit & push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          for i in {1..10}
-          do
-            TODAY="$(date -u +"%Y-%m-%d %H:%M UTC")"
-            echo "- $TODAY : Daily contribution entry #$i" >> contributions.md
-            git add contributions.md
-            git commit -m "chore: daily contribution #$i $(date -u +'%Y-%m-%d %H:%M')"
-            git push
-            sleep 5  # small delay to avoid pushing too quickly
-          done
+          git add contributions.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: daily contribution $(date -u +'%Y-%m-%d %H:%M')"
+          git push
