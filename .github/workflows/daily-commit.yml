@@ -1,0 +1,43 @@
+name: Daily Contribution Commit
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # runs daily at 00:00 UTC
+  workflow_dispatch:      # allows manual run
+
+permissions:
+  contents: write
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Ensure contributions file exists
+        run: |
+          if [ ! -f contributions.md ]; then
+            echo "# Contributions Log" > contributions.md
+            echo "" >> contributions.md
+          fi
+
+      - name: Append today's entry
+        run: |
+          TODAY="$(date -u +"%Y-%m-%d %H:%M UTC")"
+          echo "- $TODAY : Daily contribution entry." >> contributions.md
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add contributions.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: daily contribution $(date -u +'%Y-%m-%d')"
+          git push
